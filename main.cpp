@@ -17,7 +17,7 @@
 #include "Tracker.h"
 #include "CompositeFeatureCalculator.h"
 #include "HaarFeatureCalculator.h"
-#include "RawFeatureCalculator.h"
+//#include "RawFeatureCalculator.h"
 #include "GeomUtil.h"
 
 using namespace thunderstruck;
