@@ -39,6 +39,8 @@ public:
    *
    * \param[in] sequenceDir The directory containing the sequence.
    */
+
+	size_t getFrameNum(){return m_frameCount;};
   explicit Sequence(const std::string& sequenceDir);
 
   //#################### PUBLIC MEMBER FUNCTIONS ####################

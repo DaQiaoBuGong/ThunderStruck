@@ -92,7 +92,7 @@ void SVM::evaluate(const GPUVector<double>& sampleFeatures, const GPUVector<int>
     );
   }, microseconds);
 #endif
-  std::cout << "---- Time to evaluate SVM: " << dur << '\n';
+ // std::cout << "---- Time to evaluate SVM: " << dur << '\n';
 }
 
 size_t SVM::max_support_vectors() const
@@ -116,7 +116,7 @@ void SVM::update(const GPUTexture1b& frame, const cv::Rect_<float>& curBoundingB
       curBoundingBox.x, curBoundingBox.y, curBoundingBox.width, curBoundingBox.height,
       frame.width(), frame.height()
     ), microseconds);
-    std::cout << "Time to filter samples for learning: " << dur << '\n';
+   // std::cout << "Time to filter samples for learning: " << dur << '\n';
   }
 
   // Calculate the feature vectors for those new samples.
@@ -125,13 +125,13 @@ void SVM::update(const GPUTexture1b& frame, const cv::Rect_<float>& curBoundingB
       frame.get(), m_learningSampleData.get(), keepSamples.get(), m_learningSampleCount,
       curBoundingBox, features.get(), integralFrame ? integralFrame->get() : 0
     ), microseconds);
-    std::cout << "Time to calculate features for learning: " << dur << '\n';
+   // std::cout << "Time to calculate features for learning: " << dur << '\n';
   }
 
   // Run the update steps for the SVM, making sure that the budget for support vectors is not exceeded.
   {
     CUDA_TIME(process_new(index), microseconds);
-    std::cout << "Time to run ProcessNew: " << dur << '\n';
+    //std::cout << "Time to run ProcessNew: " << dur << '\n';
   }
 
   for(size_t i = 0; i < m_nR; ++i)
@@ -437,7 +437,7 @@ void SVM::reprocess()
 {
   {
     CUDA_TIME(process_old(), microseconds);
-    std::cout << "Time to run ProcessOld: " << dur << '\n';
+   // std::cout << "Time to run ProcessOld: " << dur << '\n';
   }
 
   CUDA_TIME(
@@ -446,7 +446,7 @@ void SVM::reprocess()
       optimize();
     },
   microseconds);
-  std::cout << "Time to run Optimizes: " << dur << '\n';
+ // std::cout << "Time to run Optimizes: " << dur << '\n';
 }
 
 void SVM::smo_step(size_t plusIndex, size_t minusIndex)

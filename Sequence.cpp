@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "Sequence.h"
 
+
 #include <exception>
 #include <fstream>
 #include <iostream>
@@ -20,7 +21,7 @@ namespace thunderstruck	{
 Sequence::Sequence(const std::string& sequenceDir)
 : m_sequencePath(sequenceDir)
 {
-  std::cout << "Reading sequence data from " << canonical(m_sequencePath) << '\n';
+  //std::cout << "Reading sequence data from " << canonical(m_sequencePath) << '\n';
   //std::cout << "Sequence name: " << name() << '\n';
   m_firstFrameNumber = -1;
   m_frameCount = -1;
@@ -73,7 +74,7 @@ void Sequence::read_frames_file()
   sscanf(line.c_str(), "%d,%d", &startFrame, &endFrame);
   if (fs.fail() || startFrame == -1 || endFrame == -1)
   {
-	  std::cout << "error: could not parse sequence frames file" << std::endl;
+	 // std::cout << "error: could not parse sequence frames file" << std::endl;
 	   throw std::runtime_error("Could not read sequence frames file");
   }
   m_firstFrameNumber = (size_t)startFrame;
@@ -115,7 +116,7 @@ void Sequence::read_ground_truth_file()
 
   if (fs.fail() || xmin < 0.f || ymin < 0.f || width < 0.f || height < 0.f)
   {
-	  std::cout << "error: could not parse sequence gt file" << std::endl;
+	 // std::cout << "error: could not parse sequence gt file" << std::endl;
 	  throw std::runtime_error("Could not read sequence frames file");
   }
    m_boundingBoxes.push_back(cv::Rect_<float>(xmin, ymin, width, height));

@@ -135,7 +135,7 @@ public:
   {
     std::vector<T> cpuVec = to_cpu();
 #if 0
-    std::cout << std::fixed << std::setprecision(17);
+   // std::cout << std::fixed << std::setprecision(17);
 #endif
     std::copy(cpuVec.begin(), limit != INT_MAX ? cpuVec.begin() + std::min(limit, cpuVec.size()) : cpuVec.end(), std::ostream_iterator<T>(os, " "));
     os << '\n';

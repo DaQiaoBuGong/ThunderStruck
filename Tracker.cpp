@@ -43,11 +43,11 @@ void Tracker::update(const cv::Mat& frame, bool initialFrame)
   static boost::chrono::high_resolution_clock::time_point t0 = boost::chrono::high_resolution_clock::now();
   boost::chrono::high_resolution_clock::time_point t1 = boost::chrono::high_resolution_clock::now();
   boost::chrono::milliseconds dur = boost::chrono::duration_cast<boost::chrono::milliseconds>(t1 - t0);
-  std::cout << "\nTime since last frame: " << dur << '\n';
+//  std::cout << "\nTime since last frame: " << dur << '\n';
   if(dur.count() > 0)
   {
     float fps = 1000.0f / dur.count();
-    std::cout << "Frames per second: " << fps << '\n';
+    //std::cout << "Frames per second: " << fps << '\n';
   }
   t0 = t1;
 
@@ -59,7 +59,7 @@ void Tracker::update(const cv::Mat& frame, bool initialFrame)
   if(avgDur.count() > 0)
   {
     float fps = 1000.0f / avgDur.count();
-    std::cout << "Average frames per second: " << fps << '\n';
+    //std::cout << "Average frames per second: " << fps << '\n';
   }
 #endif
 
@@ -129,7 +129,7 @@ bool Tracker::predict_bounding_box(const GPUTexture1b& frame, const boost::optio
       m_curBoundingBox.x, m_curBoundingBox.y, m_curBoundingBox.width, m_curBoundingBox.height,
       frame.width(), frame.height()
     ), microseconds);
-    std::cout << "Time to filter samples for prediction: " << dur << '\n';
+    //std::cout << "Time to filter samples for prediction: " << dur << '\n';
   }
 
   // Calculate feature vectors for those bounding boxes.
@@ -140,7 +140,7 @@ bool Tracker::predict_bounding_box(const GPUTexture1b& frame, const boost::optio
       frame.get(), m_trackingSampleData.get(), keepSamples.get(), m_trackingSampleCount,
       m_curBoundingBox, sampleFeatures.get(), integralFrame ? integralFrame->get() : 0
     ), microseconds);
-    std::cout << "Time to calculate features for prediction: " << dur << '\n';
+   // std::cout << "Time to calculate features for prediction: " << dur << '\n';
   }
 
   // Evaluate the SVM on those bounding boxes and pick the best one (if any) as the predicted bounding box for this frame.
@@ -170,7 +170,7 @@ bool Tracker::predict_bounding_box(const GPUTexture1b& frame, const boost::optio
         m_curBoundingBox.y += yOffset;
       }
     }, microseconds);
-    std::cout << "Time to pick the best bounding box: " << dur << '\n';
+   // std::cout << "Time to pick the best bounding box: " << dur << '\n';
   }
 
   return true;
