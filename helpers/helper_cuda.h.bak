@@ -1011,27 +1011,6 @@ inline int findCudaDevice(int argc, const char **argv)
     return devID;
 }
 
-inline int SetCudaDevice(int gpuID)
-{
-	cudaDeviceProp deviceProp;
-	int devID = gpuID;
-
-	int count = 0;
-	checkCudaErrors(cudaGetDeviceCount(&count));
-
-	if (count <= 0)
-	{
-		printf("No Gpu Device : exiting...\n");
-		exit(EXIT_FAILURE);
-	}
-	else 
-	{
-		checkCudaErrors(cudaSetDevice(devID));
-		checkCudaErrors(cudaGetDeviceProperties(&deviceProp, devID));
-		printf("GPU Device %d: \"%s\" with compute capability %d.%d\n\n", devID, deviceProp.name, deviceProp.major, deviceProp.minor);
-	}
-}
-
 // General check for CUDA GPU SM Capabilities
 inline bool checkCudaCapabilities(int major_version, int minor_version)
 {
