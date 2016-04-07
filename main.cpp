@@ -44,7 +44,7 @@ boost::shared_ptr<Sequence> g_sequence;
 //#################### GLOBAL FUNCTIONS ####################
 
 /**
- * \brief Renders the tracker's current frame and bounding box.
+ * \brief Renders the tracker's current frame and bounding box.        //同步显示函数，与tracking属不同线程
  */
 bool render_frame()
 {
@@ -81,7 +81,7 @@ bool render_frame()
   }
 
   // Draw the current bounding box onto the output image.
-  cv::rectangle(output, boundingBox.tl(), boundingBox.br(), CV_RGB(255,0,0));
+  cv::rectangle(output, boundingBox.tl(), boundingBox.br(), CV_RGB(255,0,0));//tl()返回左上角点坐标，br()返回右下角点坐标。
 
 #if 0
   // Draw the most recent ground truth bounding box onto the output image.
