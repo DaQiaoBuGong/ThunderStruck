@@ -206,7 +206,7 @@ int _tmain(int argc,char **argv)
 // 
 // 	cv::waitKey(0);
 
-	ThunderStruck thunder;
+	ThunderStruck thunder("data/Car4/img/");
 	thunder.tracking();
 	 
 	return 0;

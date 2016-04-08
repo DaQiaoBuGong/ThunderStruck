@@ -1,30 +1,24 @@
 #include "stdafx.h"
 #include "ThunderStruck.h"
 
-
-//#################### GLOBAL VARIABLES ####################
-
-/** The bounding box for the current tracking frame (shared between the two threads). */
-cv::Rect_<float> g_boundingBox;
-
-/** The current tracking frame (shared between the two threads). */
-boost::optional<cv::Mat> g_frame;
-
-/** The index of the current tracking frame (shared between the two threads). */
-size_t g_frameIndex;
-
-/** The mutex used to synchronise the two threads. */
-boost::mutex g_mutex;
-
-/** The tracking sequence (shared between the two threads, but immutable once constructed). */
-boost::shared_ptr<Sequence> g_sequence;
-
-CTimeDelay timedelay;
-
-ThunderStruck::ThunderStruck(void)
+ThunderStruck::ThunderStruck()
 {
-	sequencePath = "data/Car4/img/";
-	
+	m_bIsRealTimeTracking = true;
+	SetCudaDevice(TESLA_GPU);
+
+	m_bIsFirstFrame = true;
+}
+
+ThunderStruck::ThunderStruck(std::string sequencePath)
+{
+	m_bIsRealTimeTracking = false;
+	m_sequencePath = sequencePath;
+
+	// Read in the tracking sequence.
+	g_sequence.reset(new Sequence(m_sequencePath));//带参数的reset()则类似相同形式的构造函数，原指针引用计数减1的同时改为管理另一个指针。
+
+	SetCudaDevice(TESLA_GPU);
+	m_bIsFirstFrame = true;
 }
 
 
@@ -34,136 +28,72 @@ ThunderStruck::~ThunderStruck(void)
 
 void ThunderStruck::tracking()
 {
-	// Read in the tracking sequence.
-	g_sequence.reset(new Sequence(sequencePath));//带参数的reset()则类似相同形式的构造函数，原指针引用计数减1的同时改为管理另一个指针。
+	if (!m_bIsRealTimeTracking)
+	{
+		if (true == m_bIsFirstFrame)
+		{
+		   // Set the initial bounding box and frame.
+			g_boundingBox = g_sequence->bounding_box(0);
+			g_frame = g_sequence->frame(0);
+			m_bIsFirstFrame = false;
+		}
+		
+		run_tracking_offline();
+	}
 
-	SetCudaDevice(0);
-
-	// Set the initial bounding box and frame.
-	g_boundingBox = g_sequence->bounding_box(0);
-	g_frame = g_sequence->frame(0);
-
-	// Set up the rendering window and render the first frame.
-	cv::namedWindow("stricken", CV_WINDOW_AUTOSIZE);
-	render_frame();
-
-	// Start the tracker and enter the rendering loop.
-	//boost::thread trackingThread(&run_tracking);
-	//trackingThread.detach();
-	run_tracking();
-	while(render_frame());
-
-	cv::waitKey(0);
-}
-
-bool ThunderStruck::render_frame()
-{
-  // Get the current bounding box and frame.
-  cv::Rect boundingBox;
-  boost::optional<cv::Mat> frame;
-  size_t frameIndex;
-
-  {
-    boost::lock_guard<boost::mutex> lock(g_mutex);
-    boundingBox = g_boundingBox; // note: we truncate the coordinates of the bounding box to integers here
-    frame = g_frame;
-    frameIndex = g_frameIndex;
-
-#if 0
-    // To step the tracker one frame at a time, we wait for a key here whilst holding the mutex (to stop the tracking).
-    cv::waitKey(0);
-#endif
-  }
-
-  // If we've reached the end of the tracking sequence, exit.
-  if(!frame) return false;
-
-  // Make a colour version of the current frame for output purposes.
-  cv::Mat3b output;
-  if(frame->channels() == 1)
-  {
-    cv::Mat1b channels[] = { *frame, *frame, *frame };
-    cv::merge(channels, 3, output);
-  }
-  else
-  {
-    output = frame->clone();
-  }
-
-  // Draw the current bounding box onto the output image.
-  cv::rectangle(output, boundingBox.tl(), boundingBox.br(), CV_RGB(255,0,0));//tl()返回左上角点坐标，br()返回右下角点坐标。
-
-#if 0
-  // Draw the most recent ground truth bounding box onto the output image.
-  cv::Rect gtBoundingBox;
-  for(int i = frameIndex; i >= 0; --i)
-  {
-    gtBoundingBox = g_sequence->bounding_box(i); // note: we truncate the coordinates of the bounding box to integers here
-    if(gtBoundingBox.width > 0) break;
-  }
-  cv::rectangle(output, gtBoundingBox.tl(), gtBoundingBox.br(), CV_RGB(0,255,0));
-#endif
-
-  // Show the output image.
-  cv::imshow("stricken", output);
-  //cv::imwrite("test.bmp", output);
-  cv::waitKey(1);
-
-  return true;
 }
 
 /**
  * \brief Runs the tracker (on a separate thread).
  */
-void ThunderStruck::run_tracking()
+void ThunderStruck::run_tracking_offline()
 {
 	timedelay.start();
-  // Set up the tracker.
-  CompositeFeatureCalculator_Ptr featureCalculator(new CompositeFeatureCalculator);
+
+	//不同的特征算法
+	CompositeFeatureCalculator_Ptr featureCalculator(new CompositeFeatureCalculator);
 #if 0
-  featureCalculator->add_calculator(FeatureCalculator_CPtr(new RawFeatureCalculator));
+	featureCalculator->add_calculator(FeatureCalculator_CPtr(new RawFeatureCalculator));
 #else
-  featureCalculator->add_calculator(FeatureCalculator_CPtr(new HaarFeatureCalculator));
+	featureCalculator->add_calculator(FeatureCalculator_CPtr(new HaarFeatureCalculator));
 #endif
+
   Tracker tracker(g_boundingBox, featureCalculator);
 
   // Track the object indicated by the initial bounding box through the sequence.
-  double qualitySum = 0.0;
-  size_t qualityCount = 0;
+//   double qualitySum = 0.0;
+//   size_t qualityCount = 0;
   for(size_t i = 0, frameCount = g_sequence->frame_count(); i < frameCount; ++i)
   {
     // Update the tracker with the current frame from the sequence.
     cv::Mat frame = g_sequence->frame(i);
     tracker.update(g_sequence->frame(i), i == 0);
 
-    // Update the record of tracking quality.
-    const cv::Rect_<float>& groundTruthBoundingBox = g_sequence->bounding_box(i);
-    if(groundTruthBoundingBox.width != 0)
-    {
-      qualitySum += GeomUtil::compute_overlap(tracker.get_current_bounding_box(), groundTruthBoundingBox);
-      ++qualityCount;
-    }
-
-    if(qualityCount != 0)
-    {
-      //std::cout << "RUNNING TRACKING QUALITY: " << qualitySum / qualityCount << '\n';
-    }
-
     // Provide the current frame and bounding box to the rendering thread.
     boost::lock_guard<boost::mutex> lock(g_mutex);
     g_boundingBox = tracker.get_current_bounding_box();
     g_frame = frame;
     g_frameIndex = i;
+
+	// Make a colour version of the current frame for output purposes.
+	cv::Mat3b output;
+	if(frame.channels() == 1)
+	{
+		cvtColor(frame, frame, CV_GRAY2BGR);
+	}
+	else
+	{
+		output = frame.clone();
+	}
+
+	// Draw the current bounding box onto the output image.
+	cv::rectangle(output, g_boundingBox.tl(), g_boundingBox.br(), CV_RGB(255,0,0));//tl()返回左上角点坐标，br()返回右下角点坐标。
+	cv::imshow("Result",output);
+	cv::waitKey(1);
   }
 
-  //std::cout << "OVERALL TRACKING QUALITY: " << qualitySum / qualityCount << '\n';
-
-  {
-    // Clear the current frame when we get to the end of the tracking sequence.
-    boost::lock_guard<boost::mutex> lock(g_mutex);
-    g_frame = boost::none;
-  }
   float t = timedelay.end() / g_sequence->getFrameNum();
   std::cout<<"fps :"<<1000/t<<std::endl;
   
 }
+
