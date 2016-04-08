@@ -49,9 +49,12 @@ void ThunderStruck::tracking()
 void ThunderStruck::run_tracking_offline()
 {
 	timedelay.start();
-
-	//不同的特征算法
 	CompositeFeatureCalculator_Ptr featureCalculator(new CompositeFeatureCalculator);
+ #if 0
+	  featureCalculator->add_calculator(FeatureCalculator_CPtr(new RawFeatureCalculator));
+#else
+	   featureCalculator->add_calculator(FeatureCalculator_CPtr(new HaarFeatureCalculator));
+	 #endif
 #if 0
 	featureCalculator->add_calculator(FeatureCalculator_CPtr(new RawFeatureCalculator));
 #else
@@ -96,4 +99,3 @@ void ThunderStruck::run_tracking_offline()
   std::cout<<"fps :"<<1000/t<<std::endl;
   
 }
-
