@@ -29,6 +29,7 @@ Tracker::Tracker(const cv::Rect_<float>& initialBoundingBox, const FeatureCalcul
   m_trackingSampleData = Sampler::cpu_to_gpu(trackingSamples);
 }
 
+
 //#################### PUBLIC MEMBER FUNCTIONS ####################
 
 const cv::Rect_<float>& Tracker::get_current_bounding_box() const

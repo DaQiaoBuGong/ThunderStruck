@@ -206,8 +206,22 @@ int _tmain(int argc,char **argv)
 // 
 // 	cv::waitKey(0);
 
-	ThunderStruck thunder("data/Car4/img/");
-	thunder.tracking();
+// 	ThunderStruck thunder("data/Car4/img/");
+// 	thunder.tracking();
+
+
+	CompositeFeatureCalculator_Ptr featureCalculator(new CompositeFeatureCalculator);
+	 #if 0
+	   featureCalculator->add_calculator(FeatureCalculator_CPtr(new RawFeatureCalculator));
+	 #else
+	   featureCalculator->add_calculator(FeatureCalculator_CPtr(new HaarFeatureCalculator));
+	 #endif
+	cv::Mat frame;
+	cv::Rect_<float> rect;
+	ThunderStruck tracker(frame, rect, featureCalculator);
+	tracker.GetInitResult(rect);
+
+	tracker.tracking(frame, rect);
 	 
 	return 0;
 }

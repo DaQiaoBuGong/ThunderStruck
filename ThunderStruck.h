@@ -9,6 +9,8 @@
 #include <helper_cuda.h>
 
 #include <opencv2/opencv.hpp>
+#include <process.h>
+
 
 #include "Sequence.h"   //参数文件
 #include "Tracker.h"
@@ -26,6 +28,7 @@ class ThunderStruck
 public:
 	ThunderStruck(void);
 	ThunderStruck(std::string sequencePath);
+	ThunderStruck(cv::Mat& initframe, cv::Rect_<float>& initbox, CompositeFeatureCalculator_Ptr featureCalculator);
 
 	~ThunderStruck(void);
 
@@ -59,14 +62,23 @@ private:
 	void run_tracking_offline();
 	std::string m_sequencePath;
 
+	Tracker* m_tracker;
+
 public:
 	void tracking();
-	void tracking(cv::Mat& frame, cv::Rect_<float> Box);
+
+	//实时跟踪
+	void tracking(cv::Mat& frame);
+
 
 	void SetFirstFrame(bool firstFrame){m_bIsFirstFrame = firstFrame;};
 	bool GetFirstFrame(){return m_bIsFirstFrame;};
 
 	void SetRealTimeTracking(bool RealTime){m_bIsRealTimeTracking = RealTime;};
 	bool GetRealTimeTracking(){return m_bIsRealTimeTracking;};
+
+
+	bool tracking(cv::Mat& frame, cv::Rect_<float>& box);
+
 };
 

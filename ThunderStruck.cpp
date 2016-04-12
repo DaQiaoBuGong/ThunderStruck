@@ -1,12 +1,21 @@
 #include "stdafx.h"
 #include "ThunderStruck.h"
 
-ThunderStruck::ThunderStruck()
+ThunderStruck::ThunderStruck(cv::Mat& initframe, cv::Rect_<float>& initbox, CompositeFeatureCalculator_Ptr featureCalculator)
 {
+	m_tracker = new Tracker(initbox, featureCalculator);
 	m_bIsRealTimeTracking = true;
+	m_bIsFirstFrame = true;
 	SetCudaDevice(TESLA_GPU);
 
-	m_bIsFirstFrame = true;
+	cv::Mat frame = initframe;
+    m_tracker->update(initframe, m_bIsFirstFrame);
+
+    // Provide the current frame and bounding box to the rendering thread.
+    boost::lock_guard<boost::mutex> lock(g_mutex);
+    initbox = m_tracker->get_current_bounding_box();
+
+	m_bIsFirstFrame = false;
 }
 
 ThunderStruck::ThunderStruck(std::string sequencePath)
@@ -21,10 +30,16 @@ ThunderStruck::ThunderStruck(std::string sequencePath)
 	m_bIsFirstFrame = true;
 }
 
+ThunderStruck::ThunderStruck()
+{
 
+}
 ThunderStruck::~ThunderStruck(void)
 {
+	free(m_tracker);
 }
+
+
 
 void ThunderStruck::tracking()
 {
@@ -75,8 +90,8 @@ void ThunderStruck::run_tracking_offline()
     // Provide the current frame and bounding box to the rendering thread.
     boost::lock_guard<boost::mutex> lock(g_mutex);
     g_boundingBox = tracker.get_current_bounding_box();
-    g_frame = frame;
-    g_frameIndex = i;
+   /* g_frame = frame;
+    g_frameIndex = i;*/
 
 	// Make a colour version of the current frame for output purposes.
 	cv::Mat3b output;
@@ -97,5 +112,15 @@ void ThunderStruck::run_tracking_offline()
 
   float t = timedelay.end() / g_sequence->getFrameNum();
   std::cout<<"fps :"<<1000/t<<std::endl;
-  
+}
+
+
+bool ThunderStruck::tracking(cv::Mat& frame, cv::Rect_<float>& box)
+{
+	m_tracker->update(frame, m_bIsFirstFrame);
+
+	// Provide the current frame and bounding box to the rendering thread.
+	boost::lock_guard<boost::mutex> lock(g_mutex);
+	box = m_tracker->get_current_bounding_box();
+	return true;
 }
