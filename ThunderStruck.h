@@ -68,9 +68,9 @@ public:
 	void tracking();
 
 	//ÊµÊ±¸ú×Ù
-	void tracking(cv::Mat& frame);
+	bool tracking(cv::Mat& frame, cv::Rect_<float>& box);
 
-
+	//×´Ì¬Á¿
 	void SetFirstFrame(bool firstFrame){m_bIsFirstFrame = firstFrame;};
 	bool GetFirstFrame(){return m_bIsFirstFrame;};
 
@@ -78,7 +78,7 @@ public:
 	bool GetRealTimeTracking(){return m_bIsRealTimeTracking;};
 
 
-	bool tracking(cv::Mat& frame, cv::Rect_<float>& box);
+	
 
 };
 

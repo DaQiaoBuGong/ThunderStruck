@@ -1,14 +1,14 @@
 #include "stdafx.h"
 #include "ThunderStruck.h"
 
+//实时跟踪构造函数
 ThunderStruck::ThunderStruck(cv::Mat& initframe, cv::Rect_<float>& initbox, CompositeFeatureCalculator_Ptr featureCalculator)
-{
-	m_tracker = new Tracker(initbox, featureCalculator);
+{	
 	m_bIsRealTimeTracking = true;
 	m_bIsFirstFrame = true;
 	SetCudaDevice(TESLA_GPU);
-
-	cv::Mat frame = initframe;
+	
+	m_tracker = new Tracker(initbox, featureCalculator);
     m_tracker->update(initframe, m_bIsFirstFrame);
 
     // Provide the current frame and bounding box to the rendering thread.
